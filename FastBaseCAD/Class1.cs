@@ -7,7 +7,7 @@ using System;
 
 public class Commands
 {
-    [CommandMethod("FASTBASE")]
+    [CommandMethod("FB")]
     public void FastBaseProjectionV11()
     {
         Document doc = Application.DocumentManager.MdiActiveDocument;
