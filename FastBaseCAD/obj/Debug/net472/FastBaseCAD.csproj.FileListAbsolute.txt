@@ -1,0 +1,9 @@
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.csproj.AssemblyReference.cache
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.GeneratedMSBuildEditorConfig.editorconfig
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.AssemblyInfoInputs.cache
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.AssemblyInfo.cs
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.csproj.CoreCompileInputs.cache
+F:\FastBaseCAD\FastBaseCAD\bin\Debug\net472\FastBaseCAD.dll
+F:\FastBaseCAD\FastBaseCAD\bin\Debug\net472\FastBaseCAD.pdb
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.dll
+F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.pdb

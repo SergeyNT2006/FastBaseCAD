@@ -1,0 +1,23 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="../Program Files/Autodesk/AutoCAD 2019/acad.exe">
+    <BuildType Project="Release" />
+    <Platform Project="x64" />
+    <Properties Name="DebuggerProjectSystem">
+      <Property Name="AttachLaunchAction" Value="No" />
+      <Property Name="Environment" Value="Default" />
+      <Property Name="Executable" Value="C:\Program Files\Autodesk\AutoCAD 2019\acad.exe" />
+      <Property Name="IORedirection" Value="Auto" />
+      <Property Name="LaunchingEngine" Value="fb0d4648-f776-4980-95f8-bb7f36ebc1ee" />
+      <Property Name="LaunchSQLEngine" Value="No" />
+      <Property Name="PortSupplier" Value="00000000-0000-0000-0000-000000000000" />
+      <Property Name="RemoteMachine" Value="DESKTOP-K1BJDD9" />
+      <Property Name="StartingDirectory" Value="C:\Program Files\Autodesk\AutoCAD 2019" />
+      <Property Name="UseLegacyDebugEngines" Value="No" />
+    </Properties>
+  </Project>
+  <Project Path="FastBaseCAD/FastBaseCAD.csproj" Id="90b6d16e-f6f1-4155-9ec9-21ef26da4ed7" />
+</Solution>
