@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FastBaseCAD")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+45d88b046bed127f3438c1a3113ca18567d9b3d7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bd1691f27b116dc64a573ea8e0db8a707a310364")]
 [assembly: System.Reflection.AssemblyProductAttribute("FastBaseCAD")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FastBaseCAD")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

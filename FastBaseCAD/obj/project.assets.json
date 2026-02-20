@@ -8,26 +8,24 @@
     ".NETFramework,Version=v4.7.2": []
   },
   "packageFolders": {
-    "C:\\Users\\ryzl\\.nuget\\packages\\": {}
+    "C:\\Users\\Serg\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\FastBaseCAD\\FastBaseCAD\\FastBaseCAD.csproj",
+      "projectUniqueName": "D:\\_GIT\\FastBaseCAD\\FastBaseCAD.csproj",
       "projectName": "FastBaseCAD",
-      "projectPath": "F:\\FastBaseCAD\\FastBaseCAD\\FastBaseCAD.csproj",
-      "packagesPath": "C:\\Users\\ryzl\\.nuget\\packages\\",
-      "outputPath": "F:\\FastBaseCAD\\FastBaseCAD\\obj\\",
+      "projectPath": "D:\\_GIT\\FastBaseCAD\\FastBaseCAD.csproj",
+      "packagesPath": "C:\\Users\\Serg\\.nuget\\packages\\",
+      "outputPath": "D:\\_GIT\\FastBaseCAD\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\ryzl\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Serg\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net472"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

@@ -7,3 +7,13 @@ F:\FastBaseCAD\FastBaseCAD\bin\Debug\net472\FastBaseCAD.dll
 F:\FastBaseCAD\FastBaseCAD\bin\Debug\net472\FastBaseCAD.pdb
 F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.dll
 F:\FastBaseCAD\FastBaseCAD\obj\Debug\net472\FastBaseCAD.pdb
+D:\_GIT\FastBaseCAD\bin\Debug\net472\FastBaseCAD.dll
+D:\_GIT\FastBaseCAD\bin\Debug\net472\FastBaseCAD.pdb
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.csproj.AssemblyReference.cache
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.GeneratedMSBuildEditorConfig.editorconfig
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.AssemblyInfoInputs.cache
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.AssemblyInfo.cs
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.csproj.CoreCompileInputs.cache
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.sourcelink.json
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.dll
+D:\_GIT\FastBaseCAD\obj\Debug\net472\FastBaseCAD.pdb
