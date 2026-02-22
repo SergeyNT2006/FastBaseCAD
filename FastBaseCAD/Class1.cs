@@ -1,4 +1,4 @@
-﻿using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.Runtime;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -9,6 +9,10 @@ public class Commands
 {
     private static class Config
     {
+        // Free = limited version | Pro = full functionality (set manually before build)
+        public static string WorkingMode = "Pro";
+        //public static string WorkingMode = "Free";
+
         public static double MIN_LENGTH = 0.1;
         public static double TEXT_OFFSET_X = 3.0;
         public static double TEXT_OFFSET_Y = 3.0;
@@ -16,9 +20,15 @@ public class Commands
         public static int RED_COLOR_INDEX = 1;
         public static int GREEN_COLOR_INDEX = 3;
         public static double TEXT_HEIGHT = 2.5;
+
+        // Messages for Free version (upgrade to Pro)
+        public static string ProUpgradeMessageLines = "Further usage available only in Pro version for 15.55 USD";
+        public static string ProUpgradeMessageStyle = "Style creation available only in Pro version for 15.55 USD";
+        public static string AppStoreUrl = ""; // Product link in App Store (fill in after publication)
     }
 
     private static string _lastMode = "Points";
+    private static bool _linesModeUsedThisSession = false;
 
     [CommandMethod("FB")]
     public void FastBaseProjectionV21()
@@ -68,6 +78,11 @@ public class Commands
             }
             else if (userInput == "S")
             {
+                if (Config.WorkingMode == "Free")
+                {
+                    ShowProUpgradeMessage(ed, Config.ProUpgradeMessageStyle);
+                    return;
+                }
                 CreateTextStylesSafe(db, ed);
                 return;
             }
@@ -94,208 +109,209 @@ public class Commands
                 pointMode = _lastMode == "Points";
             }
 
-            // ============================================================================
-            // STEP 3: COLLECT GEOMETRY DATA (A, B, C, D points)
-            // ============================================================================
-            Point3d A, B, C, D;
-            ObjectId sideObjectId = ObjectId.Null;
-
-            if (pointMode)
+            // Free: Lines mode - only once per session
+            if (!pointMode && Config.WorkingMode == "Free" && _linesModeUsedThisSession)
             {
-                PromptPointOptions ppo1 = new PromptPointOptions("\nSide start: ");
-                PromptPointResult ptA = ed.GetPoint(ppo1);
-                if (ptA.Status != PromptStatus.OK) return;
-
-                PromptPointOptions ppo2 = new PromptPointOptions("\nStart end: ");
-                ppo2.BasePoint = ptA.Value;
-                PromptPointResult ptB = ed.GetPoint(ppo2);
-                if (ptB.Status != PromptStatus.OK) return;
-
-                PromptPointOptions ppo3 = new PromptPointOptions("\nBase 1: ");
-                PromptPointResult ptC = ed.GetPoint(ppo3);
-                if (ptC.Status != PromptStatus.OK) return;
-
-                PromptPointOptions ppo4 = new PromptPointOptions("\nBase 2: ");
-                ppo4.BasePoint = ptC.Value;
-                PromptPointResult ptD = ed.GetPoint(ppo4);
-                if (ptD.Status != PromptStatus.OK) return;
-
-                A = ptA.Value;
-                B = ptB.Value;
-                C = ptC.Value;
-                D = ptD.Value;
+                ShowProUpgradeMessage(ed, Config.ProUpgradeMessageLines);
+                return;
             }
-            else
+
+            // ============================================================================
+            // LOOP: Build projections until user cancels with ESC
+            // ============================================================================
+            while (true)
             {
-                PromptEntityOptions peo1 = new PromptEntityOptions("\nSelect side line/polyline segment: ");
-                peo1.SetRejectMessage("\nPlease select Line or Polyline only");
-                PromptEntityResult per1 = ed.GetEntity(peo1);
-                if (per1.Status != PromptStatus.OK) return;
+                // STEP 3: COLLECT GEOMETRY DATA (A, B, C, D points)
+                Point3d A, B, C, D;
+                ObjectId sideObjectId = ObjectId.Null;
 
-                sideObjectId = per1.ObjectId;
-                HighlightEntity(db, sideObjectId, true);
-
-                PromptEntityOptions peo2 = new PromptEntityOptions("\nSelect base line/polyline segment: ");
-                peo2.SetRejectMessage("\nPlease select Line or Polyline only");
-                PromptEntityResult per2 = ed.GetEntity(peo2);
-                if (per2.Status != PromptStatus.OK)
+                if (pointMode)
                 {
+                    PromptPointOptions ppo1 = new PromptPointOptions("\nSide start: ");
+                    PromptPointResult ptA = ed.GetPoint(ppo1);
+                    if (ptA.Status != PromptStatus.OK) break;
+
+                    PromptPointOptions ppo2 = new PromptPointOptions("\nStart end: ");
+                    ppo2.BasePoint = ptA.Value;
+                    PromptPointResult ptB = ed.GetPoint(ppo2);
+                    if (ptB.Status != PromptStatus.OK) break;
+
+                    PromptPointOptions ppo3 = new PromptPointOptions("\nBase 1: ");
+                    PromptPointResult ptC = ed.GetPoint(ppo3);
+                    if (ptC.Status != PromptStatus.OK) break;
+
+                    PromptPointOptions ppo4 = new PromptPointOptions("\nBase 2: ");
+                    ppo4.BasePoint = ptC.Value;
+                    PromptPointResult ptD = ed.GetPoint(ppo4);
+                    if (ptD.Status != PromptStatus.OK) break;
+
+                    A = ptA.Value;
+                    B = ptB.Value;
+                    C = ptC.Value;
+                    D = ptD.Value;
+                }
+                else
+                {
+                    PromptEntityOptions peo1 = new PromptEntityOptions("\nSelect side line/polyline segment: ");
+                    peo1.SetRejectMessage("\nPlease select Line or Polyline only");
+                    PromptEntityResult per1 = ed.GetEntity(peo1);
+                    if (per1.Status != PromptStatus.OK) break;
+
+                    sideObjectId = per1.ObjectId;
+                    HighlightEntity(db, sideObjectId, true);
+
+                    PromptEntityOptions peo2 = new PromptEntityOptions("\nSelect base line/polyline segment: ");
+                    peo2.SetRejectMessage("\nPlease select Line or Polyline only");
+                    PromptEntityResult per2 = ed.GetEntity(peo2);
+                    if (per2.Status != PromptStatus.OK)
+                    {
+                        HighlightEntity(db, sideObjectId, false);
+                        break;
+                    }
+
+                    using (Transaction trEnt = db.TransactionManager.StartTransaction())
+                    {
+                        Entity sideEnt = (Entity)trEnt.GetObject(per1.ObjectId, OpenMode.ForRead);
+                        Entity baseEnt = (Entity)trEnt.GetObject(per2.ObjectId, OpenMode.ForRead);
+
+                        if (sideEnt is Line sideLine)
+                        {
+                            A = sideLine.StartPoint;
+                            B = sideLine.EndPoint;
+                        }
+                        else if (sideEnt is Polyline sidePoly)
+                        {
+                            Point3d pickPt = per1.PickedPoint;
+                            int closestVertex = FindClosestSegment(sidePoly, pickPt);
+                            A = sidePoly.GetPoint3dAt(closestVertex);
+                            B = sidePoly.GetPoint3dAt((closestVertex + 1) % sidePoly.NumberOfVertices);
+                        }
+                        else
+                        {
+                            SafeWriteMessage(ed, "\nUnsupported entity type for side");
+                            HighlightEntity(db, sideObjectId, false);
+                            continue;
+                        }
+
+                        if (baseEnt is Line baseLineObj)
+                        {
+                            C = baseLineObj.StartPoint;
+                            D = baseLineObj.EndPoint;
+                        }
+                        else if (baseEnt is Polyline basePoly)
+                        {
+                            Point3d basePickPt = per2.PickedPoint;
+                            int baseClosestVertex = FindClosestSegment(basePoly, basePickPt);
+                            C = basePoly.GetPoint3dAt(baseClosestVertex);
+                            D = basePoly.GetPoint3dAt((baseClosestVertex + 1) % basePoly.NumberOfVertices);
+                        }
+                        else
+                        {
+                            SafeWriteMessage(ed, "\nUnsupported entity type for base");
+                            HighlightEntity(db, sideObjectId, false);
+                            continue;
+                        }
+
+                        trEnt.Commit();
+                    }
+
                     HighlightEntity(db, sideObjectId, false);
-                    return;
                 }
 
-                using (Transaction trEnt = db.TransactionManager.StartTransaction())
+                // VALIDATION: Check minimum lengths
+                double abLength = A.DistanceTo(B);
+                double cdLength = C.DistanceTo(D);
+
+                if (abLength < Config.MIN_LENGTH)
                 {
-                    Entity sideEnt = (Entity)trEnt.GetObject(per1.ObjectId, OpenMode.ForRead);
-                    Entity baseEnt = (Entity)trEnt.GetObject(per2.ObjectId, OpenMode.ForRead);
-
-                    if (sideEnt is Line sideLine)
-                    {
-                        A = sideLine.StartPoint;
-                        B = sideLine.EndPoint;
-                    }
-                    else if (sideEnt is Polyline sidePoly)
-                    {
-                        Point3d pickPt = per1.PickedPoint;
-                        int closestVertex = FindClosestSegment(sidePoly, pickPt);
-                        A = sidePoly.GetPoint3dAt(closestVertex);
-                        B = sidePoly.GetPoint3dAt((closestVertex + 1) % sidePoly.NumberOfVertices);
-                    }
-                    else
-                    {
-                        SafeWriteMessage(ed, "\nUnsupported entity type for side");
-                        HighlightEntity(db, sideObjectId, false);
-                        return;
-                    }
-
-                    if (baseEnt is Line baseLineObj)
-                    {
-                        C = baseLineObj.StartPoint;
-                        D = baseLineObj.EndPoint;
-                    }
-                    else if (baseEnt is Polyline basePoly)
-                    {
-                        Point3d basePickPt = per2.PickedPoint;
-                        int baseClosestVertex = FindClosestSegment(basePoly, basePickPt);
-                        C = basePoly.GetPoint3dAt(baseClosestVertex);
-                        D = basePoly.GetPoint3dAt((baseClosestVertex + 1) % basePoly.NumberOfVertices);
-                    }
-                    else
-                    {
-                        SafeWriteMessage(ed, "\nUnsupported entity type for base");
-                        HighlightEntity(db, sideObjectId, false);
-                        return;
-                    }
-
-                    trEnt.Commit();
+                    SafeWriteMessage(ed, "\n⚠️ Side length too small (minimum 0.1mm)");
+                    continue;
+                }
+                if (cdLength < Config.MIN_LENGTH)
+                {
+                    SafeWriteMessage(ed, "\n⚠️ Base line length too small (minimum 0.1mm)");
+                    continue;
                 }
 
-                HighlightEntity(db, sideObjectId, false);
+                // STEP 4: GEOMETRY CALCULATIONS
+                Line baseLineGeo = new Line(C, D);
+                Point3d projB = baseLineGeo.GetClosestPointTo(B, false);
+                double h = B.DistanceTo(projB);
+                Point3d projA = baseLineGeo.GetClosestPointTo(A, false);
+                double p = projA.DistanceTo(projB);
+
+                if (h < Config.MIN_LENGTH || p < Config.MIN_LENGTH)
+                {
+                    SafeWriteMessage(ed, "\n⚠️ Cannot build projection/height (zero values detected)");
+                    continue;
+                }
+
+                // STEP 5: DRAW RESULTS
+                using (Transaction tr = db.TransactionManager.StartTransaction())
+                {
+                    BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                    BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
+
+                    Line heightLine = new Line(B, projB);
+                    heightLine.ColorIndex = Config.RED_COLOR_INDEX;
+                    heightLine.Layer = "HEIGHTS";
+                    btr.AppendEntity(heightLine);
+                    tr.AddNewlyCreatedDBObject(heightLine, true);
+
+                    Line projLineAB = new Line(projA, projB);
+                    projLineAB.ColorIndex = Config.GREEN_COLOR_INDEX;
+                    projLineAB.LineWeight = Config.PROJ_LINEWEIGHT;
+                    projLineAB.Layer = "PROJECTIONS";
+                    btr.AppendEntity(projLineAB);
+                    tr.AddNewlyCreatedDBObject(projLineAB, true);
+
+                    ObjectId styleHeightId = ObjectId.Null;
+                    ObjectId styleProjId = ObjectId.Null;
+                    TextStyleTable tst = (TextStyleTable)tr.GetObject(db.TextStyleTableId, OpenMode.ForRead);
+                    if (tst.Has("FB_hight")) styleHeightId = tst["FB_hight"];
+                    if (tst.Has("FB_base")) styleProjId = tst["FB_base"];
+
+                    Vector3d heightDir = (projB - B).GetNormal();
+                    Vector3d heightPerp = Vector3d.ZAxis.CrossProduct(heightDir) * Config.TEXT_OFFSET_X;
+                    Point3d midHeight = B + (projB - B) * 0.5;
+                    DBText textH = new DBText();
+                    textH.Position = midHeight + heightPerp;
+                    textH.TextStyleId = styleHeightId;
+                    textH.TextString = $"h = {h:F1} mm";
+                    textH.ColorIndex = Config.RED_COLOR_INDEX;
+                    textH.Layer = "HEIGHTS";
+                    btr.AppendEntity(textH);
+                    tr.AddNewlyCreatedDBObject(textH, true);
+
+                    Vector3d projDir = (projB - projA).GetNormal();
+                    Vector3d projPerp = Vector3d.ZAxis.CrossProduct(projDir) * Config.TEXT_OFFSET_Y;
+                    Point3d midProj = projA + (projB - projA) * 0.5;
+                    DBText textP = new DBText();
+                    textP.Position = midProj + projPerp;
+                    textP.TextStyleId = styleProjId;
+                    textP.TextString = $"p = {p:F1} mm";
+                    textP.ColorIndex = Config.GREEN_COLOR_INDEX;
+                    textP.Layer = "PROJECTIONS";
+                    btr.AppendEntity(textP);
+                    tr.AddNewlyCreatedDBObject(textP, true);
+
+                    tr.Commit();
+                }
+
+                // SUCCESS OUTPUT
+                string successMsg = Config.WorkingMode == "Pro"
+                    ? "\n🚀 FastBase (Pro) v2.1 - Projections created successfully!"
+                    : "\n🚀 FastBase v2.1 (Free) - Projections created successfully!";
+                SafeWriteMessage(ed, successMsg);
+                SafeWriteMessage(ed, $"\n   {_lastMode} mode:");
+                SafeWriteMessage(ed, $"\n   Side = {abLength:F1} mm");
+                SafeWriteMessage(ed, $"\n   Base = {cdLength:F1} mm");
+                SafeWriteMessage(ed, $"\n   h = {h:F1} mm");
+                SafeWriteMessage(ed, $"\n   p = {p:F1} mm");
+
+                if (!pointMode && Config.WorkingMode == "Free")
+                    _linesModeUsedThisSession = true;
             }
-
-
-            // ============================================================================
-            // VALIDATION: Check minimum lengths
-            // ============================================================================
-            double abLength = A.DistanceTo(B);
-            double cdLength = C.DistanceTo(D);
-
-            if (abLength < Config.MIN_LENGTH)
-            {
-                SafeWriteMessage(ed, "\n⚠️ Side length too small (minimum 0.1mm)");
-                return;
-            }
-            if (cdLength < Config.MIN_LENGTH)
-            {
-                SafeWriteMessage(ed, "\n⚠️ Base line length too small (minimum 0.1mm)");
-                return;
-            }
-
-            // ============================================================================
-            // STEP 4: GEOMETRY CALCULATIONS
-            // ============================================================================
-
-            Line baseLineGeo = new Line(C, D);
-            Point3d projB = baseLineGeo.GetClosestPointTo(B, false);
-            double h = B.DistanceTo(projB);
-            Point3d projA = baseLineGeo.GetClosestPointTo(A, false);
-            double p = projA.DistanceTo(projB);
-
-            if (h < Config.MIN_LENGTH || p < Config.MIN_LENGTH)
-            {
-                SafeWriteMessage(ed, "\n⚠️ Cannot build projection/height (zero values detected)");
-                return;
-            }
-
-            // ============================================================================
-            // STEP 5: DRAW RESULTS - PERFECT TEXT POSITIONING + TEXT STYLES
-            // ============================================================================
-            using (Transaction tr = db.TransactionManager.StartTransaction())
-            {
-                BlockTable bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-                BlockTableRecord btr = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite);
-
-                // 🔴 RED HEIGHT LINE (B → projB)
-                Line heightLine = new Line(B, projB);
-                heightLine.ColorIndex = Config.RED_COLOR_INDEX;
-                heightLine.Layer = "HEIGHTS";
-                btr.AppendEntity(heightLine);
-                tr.AddNewlyCreatedDBObject(heightLine, true);
-
-                // 🟢 GREEN PROJECTION LINE (projA → projB)
-                Line projLineAB = new Line(projA, projB);
-                projLineAB.ColorIndex = Config.GREEN_COLOR_INDEX;
-                projLineAB.LineWeight = Config.PROJ_LINEWEIGHT;
-                projLineAB.Layer = "PROJECTIONS";
-                btr.AppendEntity(projLineAB);
-                tr.AddNewlyCreatedDBObject(projLineAB, true);
-
-                // ✅ Applyed Style to text (safety)
-                ObjectId styleHeightId = ObjectId.Null;
-                ObjectId styleProjId = ObjectId.Null;
-                TextStyleTable tst = (TextStyleTable)tr.GetObject(db.TextStyleTableId, OpenMode.ForRead);
-                if (tst.Has("FB_hight")) styleHeightId = tst["FB_hight"];
-                if (tst.Has("FB_base")) styleProjId = tst["FB_base"];
-
-                // 📏 HEIGHT TEXT - IDEAL POSITIONING (perpendicular to height line)
-                Vector3d heightDir = (projB - B).GetNormal();
-                Vector3d heightPerp = Vector3d.ZAxis.CrossProduct(heightDir) * Config.TEXT_OFFSET_X;
-                Point3d midHeight = B + (projB - B) * 0.5;
-                DBText textH = new DBText();
-                textH.Position = midHeight + heightPerp;
-                textH.TextStyleId = styleHeightId;  // ✅ Use FB_hight text style
-                textH.TextString = $"h = {h:F1} mm";
-                textH.ColorIndex = Config.RED_COLOR_INDEX;
-                textH.Layer = "HEIGHTS";
-                btr.AppendEntity(textH);
-                tr.AddNewlyCreatedDBObject(textH, true);
-
-                // 📏 PROJECTION TEXT - IDEAL POSITIONING (perpendicular to projection line)
-                Vector3d projDir = (projB - projA).GetNormal();
-                Vector3d projPerp = Vector3d.ZAxis.CrossProduct(projDir) * Config.TEXT_OFFSET_Y;
-                Point3d midProj = projA + (projB - projA) * 0.5;
-                DBText textP = new DBText();
-                textP.Position = midProj + projPerp;
-                textP.TextStyleId = styleProjId;    // ✅ Use FB_base style
-                textP.TextString = $"p = {p:F1} mm";
-                textP.ColorIndex = Config.GREEN_COLOR_INDEX;
-                textP.Layer = "PROJECTIONS";
-                btr.AppendEntity(textP);
-                tr.AddNewlyCreatedDBObject(textP, true);
-
-                tr.Commit();
-            }
-
-
-            // ============================================================================
-            // SUCCESS OUTPUT with detailed measurements
-            // ============================================================================
-            SafeWriteMessage(ed, "\n🚀 FastBase v2.1 - Projections created successfully!");
-            SafeWriteMessage(ed, $"\n   {_lastMode} mode:");
-            SafeWriteMessage(ed, $"\n   Side = {abLength:F1} mm");
-            SafeWriteMessage(ed, $"\n   Base = {cdLength:F1} mm");
-            SafeWriteMessage(ed, $"\n   h = {h:F1} mm");
-            SafeWriteMessage(ed, $"\n   p = {p:F1} mm");
         }
         catch (System.Exception ex)
         {
@@ -359,6 +375,17 @@ public class Commands
                 SafeWriteMessage(ed, "\n❌ Error creating styles");
             }
         }
+    }
+
+    /// <summary>
+    /// Displays upgrade to Pro message (Free version) with optional App Store link
+    /// </summary>
+    private void ShowProUpgradeMessage(Editor ed, string message)
+    {
+        string full = "\n" + message;
+        if (!string.IsNullOrEmpty(Config.AppStoreUrl))
+            full += "\n" + Config.AppStoreUrl;
+        SafeWriteMessage(ed, full);
     }
 
     /// <summary>
